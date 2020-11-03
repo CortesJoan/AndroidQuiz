@@ -15,6 +15,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import static com.itb.androidquiz.QuizViewModel.questionBank;
+
 public class MainActivity extends AppCompatActivity {
     TextView questionText;
     TextView progressText;
@@ -23,29 +25,14 @@ public class MainActivity extends AppCompatActivity {
     ProgressBar progressBar;
     AlertDialog.Builder finalDialogueBuilder;
     AlertDialog finalDialogue;
-    int numeroPreguntaActual = 0;
-    QuestionModel preguntaActual = questionBank[numeroPreguntaActual];
- ViewModel  viewModel;
-    static final QuestionModel[] questionBank = {
-            new QuestionModel(R.string.q0, false),
-            new QuestionModel(R.string.q1, false),
-            new QuestionModel(R.string.q2, true),
-            new QuestionModel(R.string.q3, true),
-            new QuestionModel(R.string.q4, true),
-            new QuestionModel(R.string.q5, true),
-            new QuestionModel(R.string.q6, false),
-            new QuestionModel(R.string.q7, false),
-            new QuestionModel(R.string.q8, true),
-            new QuestionModel(R.string.q9, true),
-
-
-    };
+ QuizViewModel quizViewModel;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        quizViewModel= new ViewModelProvider(this).get(QuizViewModel.class);
         setContentView(R.layout.activity_main);
-        if (savedInstanceState!=null) numeroPreguntaActual=savedInstanceState.getInt("numeroPreguntaActual");
+        if (savedInstanceState!=null) quizViewModel.setNumeroPreguntaActual(savedInstanceState.getInt("numeroPreguntaActual"));
 
         questionText = findViewById(R.id.questionText);
         progressText = findViewById(R.id.progressText);
@@ -73,26 +60,20 @@ public class MainActivity extends AppCompatActivity {
         trueButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                comprovarResultat(true, preguntaActual);
+                comprovarResultat(true, quizViewModel.getPreguntaActual());
             }
         });
         falseButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                comprovarResultat(false, preguntaActual);
+                comprovarResultat(false, quizViewModel.getPreguntaActual());
             }
         });
-        if (viewModel==null) {
-            viewModel = new ViewModelProvider(this).get(QuizViewModel.class);
-            actualitzarPantalla();
-        }else {
-            tornarApreguntaInicial();
-        }
     }
 
     private void tornarApreguntaInicial() {
-        numeroPreguntaActual = 0;
-        progressBar.setProgress(progressBar.getMax() / questionBank.length);
+        quizViewModel.setNumeroPreguntaActual(0);
+        progressBar.setProgress(progressBar.getMax() / quizViewModel.getQuestionBank().length);
         actualitzarPantalla();
     }
 
@@ -105,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
 
             Toast.makeText(MainActivity.this,  getString(R.string.onIncorrectAnswer)+" "+  preguntaActual.isAnswer(), Toast.LENGTH_SHORT).show();
         }
-        if (preguntaActual==questionBank[questionBank.length-1]){
+        if (preguntaActual== QuizViewModel.getQuestionBank()[quizViewModel.getQuestionBank().length-1]){
             finalDialogue.show();
         }else {
             cambiarPregunta();
@@ -113,26 +94,21 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void cambiarPregunta() {
-        if (numeroPreguntaActual == questionBank.length - 1) {
-
-            numeroPreguntaActual = -1;
+        if (quizViewModel.getNumeroPreguntaActual() == questionBank.length - 1) {
+            quizViewModel.setNumeroPreguntaActual(-1);
             progressBar.setProgress(0);
         }
         progressBar.incrementProgressBy(progressBar.getMax() / questionBank.length);
-        numeroPreguntaActual += 1;
-        preguntaActual = questionBank[numeroPreguntaActual];
+        quizViewModel.setNumeroPreguntaActual(quizViewModel.getNumeroPreguntaActual()+1);
+          quizViewModel.setPreguntaActual( QuizViewModel.getQuestionBank()[quizViewModel.getNumeroPreguntaActual()]);
         actualitzarPantalla();
     }
 
     void actualitzarPantalla() {
-        questionText.setText(preguntaActual.getQuestionText());
-        String text = (numeroPreguntaActual + 1) + " of " + questionBank.length;
+        questionText.setText(quizViewModel.getPreguntaActual().getQuestionText());
+        String text = (quizViewModel.getNumeroPreguntaActual() + 1) + " of " + questionBank.length;
         progressText.setText(text);
     }
 
-    @Override
-    protected void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-    outState.putInt("numeroPreguntaActual",numeroPreguntaActual);
-    }
+
 }
